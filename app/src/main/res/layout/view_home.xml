@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Header with cart button and language toggle -->
+    <RelativeLayout
+        android:id="@+id/header_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding">
+
+        <TextView
+            android:id="@+id/app_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="@dimen/text_size_title"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/language_toggle_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/cart_button"
+            android:background="@drawable/rounded_button_background"
+            android:text="@string/hindi"
+            android:textColor="@color/colorButtonText"
+            android:layout_marginEnd="8dp" />
+
+        <FrameLayout
+            android:id="@+id/cart_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_cart"
+                android:contentDescription="@string/your_cart" />
+
+            <TextView
+                android:id="@+id/cart_badge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/badge_background"
+                android:gravity="center"
+                android:textColor="@color/colorWhite"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Segment 1: Cuisines carousel -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cuisines"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/text_size_subtitle"
+                android:textStyle="bold"
+                android:padding="@dimen/default_padding" />
+
+            <LinearLayout
+                android:id="@+id/cuisines_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="@dimen/default_padding" />
+
+            <!-- Segment 2: Top dishes -->
+            <LinearLayout
+                android:id="@+id/top_dishes_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/default_padding" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

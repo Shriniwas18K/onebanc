@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- No Action Bar theme -->
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
+    </style>
+
+    <!-- Text Appearances -->
+    <style name="TextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="TextAppearance.Title">
+        <item name="android:textSize">@dimen/text_size_title</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+        <item name="android:fontFamily">sans-serif-bold</item>
+    </style>
+
+    <style name="TextAppearance.Subtitle">
+        <item name="android:textSize">@dimen/text_size_subtitle</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.Body">
+        <item name="android:textSize">@dimen/text_size_body</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.Caption">
+        <item name="android:textSize">@dimen/text_size_caption</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <!-- Button Style -->
+    <style name="ButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/rounded_button_background</item>
+        <item name="android:textColor">@color/colorButtonText</item>
+        <item name="android:textSize">@dimen/text_size_body</item>
+        <item name="android:padding">@dimen/default_padding</item>
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- CardView Style -->
+    <style name="CardViewStyle" parent="CardView">
+        <item name="cardCornerRadius">@dimen/card_corner_radius</item>
+        <item name="cardElevation">@dimen/card_elevation</item>
+        <item name="contentPadding">@dimen/default_padding</item>
+        <item name="cardBackgroundColor">@color/colorWhite</item>
+    </style>
+</resources>

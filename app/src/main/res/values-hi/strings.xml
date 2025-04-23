@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">वनबैंक रेस्टोरेंट</string>
+    <string name="top_dishes">लोकप्रिय व्यंजन</string>
+    <string name="add">जोड़ें</string>
+    <string name="no_dishes_available">इस व्यंजन श्रेणी के लिए कोई व्यंजन उपलब्ध नहीं है</string>
+    <string name="your_cart">आपका कार्ट</string>
+    <string name="subtotal">उप-कुल</string>
+    <string name="cgst">सी.जी.एस.टी. (2.5%)</string>
+    <string name="sgst">एस.जी.एस.टी. (2.5%)</string>
+    <string name="grand_total">कुल राशि</string>
+    <string name="place_order">ऑर्डर करें</string>
+    <string name="cart_empty">आपका कार्ट खाली है</string>
+    <string name="order_summary">ऑर्डर सारांश</string>
+    <string name="order_placed">ऑर्डर हो गया है</string>
+    <string name="order_failed">ऑर्डर विफल</string>
+    <string name="hindi">हिंदी</string>
+    <string name="english">English</string>
+    <string name="price">कीमत</string>
+    <string name="rating">रेटिंग</string>
+    <string name="quantity">मात्रा</string>
+    <string name="back">वापस</string>
+    <string name="languages">भाषाएं</string>
+    <string name="cuisines">व्यंजन श्रेणियां</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="confirm">पुष्टि करें</string>
+    <string name="order_details">ऑर्डर विवरण</string>
+    <string name="view_all">सभी देखें</string>
+    <string name="welcome_message">वनबैंक रेस्टोरेंट में आपका स्वागत है</string>
+    <string name="order_placed_success">आपका ऑर्डर सफलतापूर्वक दर्ज कर लिया गया है!</string>
+    <string name="order_number">ऑर्डर संख्या</string>
+</resources>
