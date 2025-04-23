@@ -7,10 +7,9 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
+import com.onebanc.assignment.R;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.onebanc.assignment.R;
 import com.onebanc.assignment.managers.CartManager;
 import com.onebanc.assignment.managers.DataManager;
 import com.onebanc.assignment.models.Cuisine;

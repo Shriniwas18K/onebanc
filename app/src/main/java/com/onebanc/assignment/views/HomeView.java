@@ -2,21 +2,17 @@ package com.onebanc.assignment.views;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
+import com.onebanc.assignment.R;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 
-import com.onebanc.assignment.R;
 import com.onebanc.assignment.models.Cuisine;
 import com.onebanc.assignment.models.Dish;
 
@@ -55,7 +51,7 @@ public class HomeView extends FrameLayout {
         topDishesContainer = view.findViewById(R.id.top_dishes_container);
         cartBadgeText = view.findViewById(R.id.cart_badge);
         languageToggleButton = view.findViewById(R.id.language_toggle_button);
-        Button cartButton = view.findViewById(R.id.cart_button);
+        FrameLayout cartButton = view.findViewById(R.id.cart_button);
 
         // Set listeners
         cartButton.setOnClickListener(v -> {

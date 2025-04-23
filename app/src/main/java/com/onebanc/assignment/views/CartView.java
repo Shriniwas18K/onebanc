@@ -9,11 +9,10 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
+import com.onebanc.assignment.R;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 
-import com.onebanc.assignment.R;
 import com.onebanc.assignment.models.CartItem;
 
 import java.util.List;

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -30,20 +31,26 @@
             android:background="@drawable/rounded_button_background"
             android:text="@string/hindi"
             android:textColor="@color/colorButtonText"
-            android:layout_marginEnd="8dp" />
+            android:layout_marginEnd="8dp"
+            tools:ignore="RelativeOverlap" />
 
         <FrameLayout
             android:id="@+id/cart_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true">
+            android:layout_centerVertical="true"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"> <!-- Adds ripple effect for button-like behavior -->
 
             <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:id="@+id/cart_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@drawable/ic_cart"
-                android:contentDescription="@string/your_cart" />
+                android:contentDescription="@string/your_cart"
+                android:layout_gravity="center" />
 
             <TextView
                 android:id="@+id/cart_badge"
@@ -54,8 +61,10 @@
                 android:gravity="center"
                 android:textColor="@color/colorWhite"
                 android:textSize="12sp"
-                android:visibility="gone" />
+                android:visibility="gone"
+                android:textStyle="bold" />
         </FrameLayout>
+
     </RelativeLayout>
 
     <ScrollView

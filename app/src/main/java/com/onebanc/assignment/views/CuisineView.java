@@ -13,10 +13,9 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 
-import com.onebanc.assignment.R;
 import com.onebanc.assignment.models.Cuisine;
 import com.onebanc.assignment.models.Dish;
-
+import com.onebanc.assignment.R;
 import java.util.List;
 
 public class CuisineView extends FrameLayout {
@@ -49,7 +48,7 @@ public class CuisineView extends FrameLayout {
         dishesContainer = view.findViewById(R.id.dishes_container);
         cartBadgeText = view.findViewById(R.id.cart_badge);
         backButton = view.findViewById(R.id.back_button);
-        Button cartButton = view.findViewById(R.id.cart_button);
+        FrameLayout cartButton = view.findViewById(R.id.cart_button);
 
         // Set listeners
         backButton.setOnClickListener(v -> {
