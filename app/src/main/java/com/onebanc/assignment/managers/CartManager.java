@@ -1,7 +1,13 @@
 package com.onebanc.assignment.managers;
 
+import android.content.Context;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.onebanc.assignment.api.ApiClient;
 import com.onebanc.assignment.models.CartItem;
 import com.onebanc.assignment.models.Dish;
+import com.onebanc.assignment.models.OrderRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,12 +15,22 @@ import java.util.List;
 import java.util.Map;
 
 public class CartManager {
+    private static final String TAG = "CartManager";
+    private Context context;
+    private ApiClient apiClient;
     private Map<Integer, CartItem> cartItems;
     private static final double CGST_RATE = 0.025; // 2.5%
     private static final double SGST_RATE = 0.025; // 2.5%
 
-    public CartManager() {
-        cartItems = new HashMap<>();
+    public interface PaymentCallback {
+        void onPaymentSuccess(String transactionReference);
+        void onPaymentError(String errorMessage);
+    }
+
+    public CartManager(Context context) {
+        this.context = context;
+        this.apiClient = new ApiClient();
+        this.cartItems = new HashMap<>();
     }
 
     /**
@@ -163,5 +179,43 @@ public class CartManager {
             return cartItems.get(dishId).getQuantity();
         }
         return 0;
+    }
+
+    /**
+     * Process payment for items in the cart
+     */
+    public void processPayment(PaymentCallback callback) {
+        if (isCartEmpty()) {
+            callback.onPaymentError("Cart is empty");
+            return;
+        }
+
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setTotalAmount(getGrandTotal());
+        orderRequest.setTotalItems(getTotalItemCount());
+
+        for (CartItem cartItem : cartItems.values()) {
+            Dish dish = cartItem.getDish();
+            orderRequest.addItem(
+                    dish.getCuisineId(),
+                    dish.getId(),
+                    dish.getPrice(),
+                    cartItem.getQuantity()
+            );
+        }
+
+        apiClient.makePayment(orderRequest, new ApiClient.ApiCallback<String>() {
+            @Override
+            public void onSuccess(String transactionReference) {
+                // Clear cart after successful payment
+                clearCart();
+                callback.onPaymentSuccess(transactionReference);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onPaymentError(errorMessage);
+            }
+        });
     }
 }

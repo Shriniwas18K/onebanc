@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat;
 import com.onebanc.assignment.models.Cuisine;
 import com.onebanc.assignment.models.Dish;
 import com.onebanc.assignment.R;
+import com.onebanc.assignment.utils.ImageLoader;
+
 import java.util.List;
 
 public class CuisineView extends FrameLayout {
@@ -125,9 +127,15 @@ public class CuisineView extends FrameLayout {
                 dpToPx(80), LinearLayout.LayoutParams.MATCH_PARENT);
         imageView.setLayoutParams(imageParams);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        // In a real app, load image from URL
-        // For now set a placeholder color
-        imageView.setBackgroundColor(getRandomColor());
+
+        // Load the dish image if available
+        if (dish.getImageUrl() != null && !dish.getImageUrl().isEmpty()) {
+            ImageLoader.loadImage(context, dish.getImageUrl(), imageView);
+        } else {
+            // Set a placeholder color if no image URL
+            imageView.setBackgroundColor(getRandomColor());
+        }
+
         layout.addView(imageView);
 
         // Info container
@@ -167,6 +175,17 @@ public class CuisineView extends FrameLayout {
         priceText.setTextSize(14);
         priceText.setPadding(0, dpToPx(4), 0, 0);
         infoLayout.addView(priceText);
+
+        // Dish rating (if available and > 0)
+        if (dish.getRating() > 0) {
+            TextView ratingText = new TextView(context);
+            ratingText.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            ratingText.setText(String.format("★ %.1f", dish.getRating()));
+            ratingText.setTextSize(14);
+            ratingText.setTextColor(ContextCompat.getColor(context, R.color.colorAccent));
+            infoLayout.addView(ratingText);
+        }
 
         layout.addView(infoLayout);
 
