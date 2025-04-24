@@ -1,7 +1,10 @@
 package com.onebanc.assignment.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -15,7 +18,13 @@ import androidx.core.content.ContextCompat;
 
 import com.onebanc.assignment.models.CartItem;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CartView extends FrameLayout {
     private Context context;
@@ -27,6 +36,9 @@ public class CartView extends FrameLayout {
     private Button backButton;
     private TextView emptyCartMessage;
     private CartViewListener listener;
+
+    // Simple memory cache for images
+    private static Map<String, Bitmap> imageCache = new HashMap<>();
 
     public interface CartViewListener {
         void onBackPressed();
@@ -133,9 +145,19 @@ public class CartView extends FrameLayout {
                 dpToPx(80), LinearLayout.LayoutParams.MATCH_PARENT);
         imageView.setLayoutParams(imageParams);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        // In a real app, load image from URL
-        // For now set a placeholder color
-        imageView.setBackgroundColor(getRandomColor());
+
+        // Set placeholder color initially
+        imageView.setBackgroundColor(getPlaceholderColor(item.getDish().getId()));
+
+        // Load dish image from URL if available
+        String imageUrl = item.getDish().getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            loadImageFromUrl(imageUrl, imageView);
+        } else {
+            // If no image URL, use placeholder or default image
+            imageView.setImageResource(getPlaceholderColor(Color.GREEN));
+        }
+
         layout.addView(imageView);
 
         // Info container
@@ -236,14 +258,62 @@ public class CartView extends FrameLayout {
         return card;
     }
 
+    // Image loading methods
+    private void loadImageFromUrl(String imageUrl, ImageView imageView) {
+        // Check if the image is already in our cache
+        if (imageCache.containsKey(imageUrl)) {
+            imageView.setImageBitmap(imageCache.get(imageUrl));
+            return;
+        }
+
+        // Otherwise, load it asynchronously
+        new ImageDownloadTask(imageView).execute(imageUrl);
+    }
+
+    private class ImageDownloadTask extends AsyncTask<String, Void, Bitmap> {
+        private ImageView imageView;
+        private String imageUrl;
+
+        public ImageDownloadTask(ImageView imageView) {
+            this.imageView = imageView;
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            imageUrl = urls[0];
+            try {
+                URL url = new URL(imageUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                return bitmap;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
+            if (result != null) {
+                // Add to cache
+                imageCache.put(imageUrl, result);
+                // Set the bitmap to the ImageView
+                imageView.setImageBitmap(result);
+            }
+        }
+    }
+
     // Helper methods
     private int dpToPx(int dp) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
 
-    private int getRandomColor() {
-        // Generate a random color for placeholder images
+    private int getPlaceholderColor(int id) {
+        // Generate a color based on the ID for consistency
         int[] colors = {
                 Color.parseColor("#FF5722"),
                 Color.parseColor("#FF9800"),
@@ -253,6 +323,6 @@ public class CartView extends FrameLayout {
                 Color.parseColor("#03A9F4"),
                 Color.parseColor("#673AB7")
         };
-        return colors[(int) (Math.random() * colors.length)];
+        return colors[Math.abs(id) % colors.length];
     }
 }

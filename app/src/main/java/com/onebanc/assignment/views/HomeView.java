@@ -1,7 +1,10 @@
 package com.onebanc.assignment.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -16,8 +19,14 @@ import androidx.core.content.ContextCompat;
 import com.onebanc.assignment.models.Cuisine;
 import com.onebanc.assignment.models.Dish;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class HomeView extends FrameLayout {
     private Context context;
@@ -28,6 +37,9 @@ public class HomeView extends FrameLayout {
     private int currentCuisineIndex = 0;
     private List<Cuisine> cuisines;
     private HomeViewListener listener;
+
+    // Simple memory cache for images
+    private static Map<String, Bitmap> imageCache = new HashMap<>();
 
     public interface HomeViewListener {
         void onCuisineSelected(Cuisine cuisine);
@@ -148,9 +160,18 @@ public class HomeView extends FrameLayout {
         imageView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(120)));
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        // In a real app, load image from URL
-        // For now set a placeholder color
-        imageView.setBackgroundColor(getRandomColor());
+
+        // Set placeholder color initially
+        imageView.setBackgroundColor(getPlaceholderColor(cuisine.getId()));
+
+        // Load image from URL if available
+        if (cuisine.getImageUrl() != null && !cuisine.getImageUrl().isEmpty()) {
+            loadImageFromUrl(cuisine.getImageUrl(), imageView);
+        } else {
+            // If no image URL, use placeholder or default image
+            imageView.setImageResource(getPlaceholderColor(Color.GREEN));
+        }
+
         layout.addView(imageView);
 
         // Text
@@ -258,9 +279,18 @@ public class HomeView extends FrameLayout {
                 dpToPx(80), LinearLayout.LayoutParams.MATCH_PARENT);
         imageView.setLayoutParams(imageParams);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        // In a real app, load image from URL
-        // For now set a placeholder color
-        imageView.setBackgroundColor(getRandomColor());
+
+        // Set placeholder color initially
+        imageView.setBackgroundColor(getPlaceholderColor(dish.getId()));
+
+        // Load dish image from URL if available
+        if (dish.getImageUrl() != null && !dish.getImageUrl().isEmpty()) {
+            loadImageFromUrl(dish.getImageUrl(), imageView);
+        } else {
+            // If no image URL, use placeholder or default image
+            imageView.setImageResource(getPlaceholderColor(Color.GREEN));
+        }
+
         layout.addView(imageView);
 
         // Info container
@@ -330,14 +360,62 @@ public class HomeView extends FrameLayout {
         }
     }
 
+    // Image loading methods
+    private void loadImageFromUrl(String imageUrl, ImageView imageView) {
+        // Check if the image is already in our cache
+        if (imageCache.containsKey(imageUrl)) {
+            imageView.setImageBitmap(imageCache.get(imageUrl));
+            return;
+        }
+
+        // Otherwise, load it asynchronously
+        new ImageDownloadTask(imageView).execute(imageUrl);
+    }
+
+    private class ImageDownloadTask extends AsyncTask<String, Void, Bitmap> {
+        private ImageView imageView;
+        private String imageUrl;
+
+        public ImageDownloadTask(ImageView imageView) {
+            this.imageView = imageView;
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            imageUrl = urls[0];
+            try {
+                URL url = new URL(imageUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                return bitmap;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
+            if (result != null) {
+                // Add to cache
+                imageCache.put(imageUrl, result);
+                // Set the bitmap to the ImageView
+                imageView.setImageBitmap(result);
+            }
+        }
+    }
+
     // Helper methods
     private int dpToPx(int dp) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
 
-    private int getRandomColor() {
-        // Generate a random color for placeholder images
+    private int getPlaceholderColor(int id) {
+        // Generate a color based on the ID for consistency
         int[] colors = {
                 Color.parseColor("#FF5722"),
                 Color.parseColor("#FF9800"),
@@ -347,6 +425,6 @@ public class HomeView extends FrameLayout {
                 Color.parseColor("#03A9F4"),
                 Color.parseColor("#673AB7")
         };
-        return colors[(int) (Math.random() * colors.length)];
+        return colors[Math.abs(id) % colors.length];
     }
 }
