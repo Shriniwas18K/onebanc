@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1076150421445",
-    "project_id": "assignment-2501c",
-    "storage_bucket": "assignment-2501c.firebasestorage.app"
+    "project_number": "21134378072",
+    "project_id": "assignment-7b41e",
+    "storage_bucket": "assignment-7b41e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1076150421445:android:b89835739ccd9d05f86dac",
+        "mobilesdk_app_id": "1:21134378072:android:d10145d5a05e9da7b0362d",
         "android_client_info": {
           "package_name": "com.onebanc.assignment"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCuQ7_-d7vXt_UWMZtltV5C3LxBx0Vdt_k"
+          "current_key": "AIzaSyBclt7eTrn8EuRcf2oleugmfc4OWmEKuIA"
         }
       ],
       "services": {
