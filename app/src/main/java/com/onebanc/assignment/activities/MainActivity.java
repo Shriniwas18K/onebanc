@@ -7,9 +7,11 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import com.onebanc.assignment.R;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.onebanc.assignment.R;
 import com.onebanc.assignment.managers.CartManager;
 import com.onebanc.assignment.managers.DataManager;
 import com.onebanc.assignment.models.Cuisine;
@@ -54,8 +56,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Initialize managers
-        dataManager = new DataManager();
-        cartManager = new CartManager();
+        dataManager = new DataManager(this);
+        cartManager = new CartManager(this);
 
         // Setup container
         container = findViewById(R.id.container);
@@ -63,13 +65,34 @@ public class MainActivity extends AppCompatActivity {
         // Load language preference
         loadLanguagePreference();
 
-        // Initialize data (In a real app, this would load from API)
-        dataManager.initializeData();
-
         // Initialize views
         initializeViews();
 
-        // Show home view
+        // Set data fetch listener
+        dataManager.setDataFetchListener(new DataManager.DataFetchListener() {
+            @Override
+            public void onDataFetched() {
+                // Update home view with fetched data
+                runOnUiThread(() -> {
+                    homeView.setCuisines(dataManager.getCuisines());
+                    homeView.setTopDishes(dataManager.getTopDishes());
+                    updateCartBadge();
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> {
+                    // Show error message to user
+                    Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+
+        // Fetch data from API
+        dataManager.fetchData();
+
+        // Show home view (initially will be empty until data is fetched)
         showHomeView();
     }
 
@@ -100,6 +123,12 @@ public class MainActivity extends AppCompatActivity {
                 cartManager.addDishToCart(dish);
                 updateCartBadge();
             }
+
+            public void onLoadMoreData() {
+                if (dataManager.hasMorePages()) {
+                    dataManager.fetchNextPage();
+                }
+            }
         });
     }
 
@@ -108,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         container.addView(homeView);
         currentView = CurrentView.HOME;
 
-        // Update the home view with data
+        // Update the home view with data - this will be updated again when API data is fetched
         homeView.setCuisines(dataManager.getCuisines());
         homeView.setTopDishes(dataManager.getTopDishes());
         updateCartBadge();
@@ -121,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
             ));
+
             cuisineView.setCuisineViewListener(new CuisineView.CuisineViewListener() {
                 @Override
                 public void onBackPressed() {
@@ -131,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onAddDishToCart(Dish dish) {
                     cartManager.addDishToCart(dish);
                     cuisineView.updateCartBadge(cartManager.getTotalItemCount());
+                    updateCartBadge();
                 }
 
                 @Override
@@ -140,128 +171,144 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        container.removeAllViews();
-        container.addView(cuisineView);
-        currentView = CurrentView.CUISINE;
+            container.removeAllViews();
+            container.addView(cuisineView);
+            currentView = CurrentView.CUISINE;
 
-        // Set data in the view
-        cuisineView.setCuisine(cuisine);
-        cuisineView.setDishes(dataManager.getDishesByCuisine(cuisine.getId()));
-        cuisineView.updateCartBadge(cartManager.getTotalItemCount());
-    }
+            // Set data in the view
+            cuisineView.setCuisine(cuisine);
+            cuisineView.setDishes(dataManager.getDishesByCuisine(cuisine.getId()));
+            cuisineView.updateCartBadge(cartManager.getTotalItemCount());
+        }
 
-    public void showCartView() {
-        if (cartView == null) {
-            cartView = new CartView(this);
-            cartView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            ));
-            cartView.setCartViewListener(new CartView.CartViewListener() {
-                @Override
-                public void onBackPressed() {
-                    if (currentView == CurrentView.CUISINE) {
-                        Cuisine lastCuisine = cuisineView.getCurrentCuisine();
-                        showCuisineView(lastCuisine);
+        public void showCartView() {
+            if (cartView == null) {
+                cartView = new CartView(this);
+                cartView.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                ));
+                cartView.setCartViewListener(new CartView.CartViewListener() {
+                    @Override
+                    public void onBackPressed() {
+                        if (currentView == CurrentView.CUISINE) {
+                            Cuisine lastCuisine = cuisineView.getCurrentCuisine();
+                            showCuisineView(lastCuisine);
+                        } else {
+                            showHomeView();
+                        }
+                    }
+
+                    @Override
+                    public void onPlaceOrderClicked() {
+                        // Process the order
+                        cartManager.processPayment(new CartManager.PaymentCallback() {
+                            @Override
+                            public void onPaymentSuccess(String transactionReference) {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this,
+                                            "Order placed successfully! Transaction Ref: " + transactionReference,
+                                            Toast.LENGTH_LONG).show();
+                                    showHomeView();
+                                });
+                            }
+
+                            @Override
+                            public void onPaymentError(String errorMessage) {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this,
+                                            "Payment failed: " + errorMessage,
+                                            Toast.LENGTH_LONG).show();
+                                });
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCartItemUpdated() {
+                        cartView.updateCartItems(cartManager.getCartItems(),
+                                cartManager.getSubtotal(),
+                                cartManager.getTaxAmount(),
+                                cartManager.getGrandTotal());
+                    }
+                });
+            }
+
+            container.removeAllViews();
+            container.addView(cartView);
+            currentView = CurrentView.CART;
+
+            // Set cart data
+            cartView.updateCartItems(cartManager.getCartItems(),
+                    cartManager.getSubtotal(),
+                    cartManager.getTaxAmount(),
+                    cartManager.getGrandTotal());
+        }
+
+        @Override
+        public void onBackPressed() {
+            switch (currentView) {
+                case CUISINE:
+                    showHomeView();
+                    break;
+                case CART:
+                    if (cuisineView != null && cuisineView.getCurrentCuisine() != null) {
+                        showCuisineView(cuisineView.getCurrentCuisine());
                     } else {
                         showHomeView();
                     }
-                }
-
-                @Override
-                public void onPlaceOrderClicked() {
-                    // In a real app, this would process the order
-                    cartManager.clearCart();
-                    showHomeView();
-                    // Show a success message/dialog
-                }
-
-                @Override
-                public void onCartItemUpdated() {
-                    cartView.updateCartItems(cartManager.getCartItems(),
-                            cartManager.getSubtotal(),
-                            cartManager.getTaxAmount(),
-                            cartManager.getGrandTotal());
-                }
-            });
+                    break;
+                case HOME:
+                    super.onBackPressed(); // Exit app
+                    break;
+            }
         }
 
-        container.removeAllViews();
-        container.addView(cartView);
-        CurrentView previousView = currentView;
-        currentView = CurrentView.CART;
+        private void updateCartBadge() {
+            int itemCount = cartManager.getTotalItemCount();
+            homeView.updateCartBadge(itemCount);
+            if (cuisineView != null) {
+                cuisineView.updateCartBadge(itemCount);
+            }
+        }
 
-        // Set cart data
-        cartView.updateCartItems(cartManager.getCartItems(),
-                cartManager.getSubtotal(),
-                cartManager.getTaxAmount(),
-                cartManager.getGrandTotal());
-    }
+        // Language management
+        private void loadLanguagePreference() {
+            SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String language = preferences.getString(LANGUAGE_KEY, LANGUAGE_ENGLISH);
+            setLocale(language);
+        }
 
-    @Override
-    public void onBackPressed() {
-        switch (currentView) {
-            case CUISINE:
-                showHomeView();
-                break;
-            case CART:
-                if (cuisineView != null && cuisineView.getCurrentCuisine() != null) {
-                    showCuisineView(cuisineView.getCurrentCuisine());
-                } else {
-                    showHomeView();
-                }
-                break;
-            case HOME:
-                super.onBackPressed(); // Exit app
-                break;
+        private void toggleLanguage() {
+            SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String currentLanguage = preferences.getString(LANGUAGE_KEY, LANGUAGE_ENGLISH);
+            String newLanguage = LANGUAGE_ENGLISH.equals(currentLanguage) ? LANGUAGE_HINDI : LANGUAGE_ENGLISH;
+
+            // Save and apply new language
+            preferences.edit().putString(LANGUAGE_KEY, newLanguage).apply();
+            setLocale(newLanguage);
+
+            // Recreate activity to apply language change
+            recreate();
+        }
+
+        private void setLocale(String languageCode) {
+            Locale locale = new Locale(languageCode);
+            Locale.setDefault(locale);
+
+            Resources resources = getResources();
+            Configuration config = resources.getConfiguration();
+            config.setLocale(locale);
+
+            resources.updateConfiguration(config, resources.getDisplayMetrics());
+        }
+
+        // Getters for managers
+        public DataManager getDataManager() {
+            return dataManager;
+        }
+
+        public CartManager getCartManager() {
+            return cartManager;
         }
     }
-
-    private void updateCartBadge() {
-        int itemCount = cartManager.getTotalItemCount();
-        homeView.updateCartBadge(itemCount);
-        if (cuisineView != null) {
-            cuisineView.updateCartBadge(itemCount);
-        }
-    }
-
-    // Language management
-    private void loadLanguagePreference() {
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String language = preferences.getString(LANGUAGE_KEY, LANGUAGE_ENGLISH);
-        setLocale(language);
-    }
-
-    private void toggleLanguage() {
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String currentLanguage = preferences.getString(LANGUAGE_KEY, LANGUAGE_ENGLISH);
-        String newLanguage = LANGUAGE_ENGLISH.equals(currentLanguage) ? LANGUAGE_HINDI : LANGUAGE_ENGLISH;
-
-        // Save and apply new language
-        preferences.edit().putString(LANGUAGE_KEY, newLanguage).apply();
-        setLocale(newLanguage);
-
-        // Recreate activity to apply language change
-        recreate();
-    }
-
-    private void setLocale(String languageCode) {
-        Locale locale = new Locale(languageCode);
-        Locale.setDefault(locale);
-
-        Resources resources = getResources();
-        Configuration config = resources.getConfiguration();
-        config.setLocale(locale);
-
-        resources.updateConfiguration(config, resources.getDisplayMetrics());
-    }
-
-    // Getters for managers
-    public DataManager getDataManager() {
-        return dataManager;
-    }
-
-    public CartManager getCartManager() {
-        return cartManager;
-    }
-}

@@ -1,5 +1,10 @@
 package com.onebanc.assignment.managers;
 
+import android.content.Context;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.onebanc.assignment.api.ApiClient;
 import com.onebanc.assignment.models.Cuisine;
 import com.onebanc.assignment.models.Dish;
 
@@ -7,81 +12,152 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class DataManager {
+    private static final String TAG = "DataManager";
+    private Context context;
+    private ApiClient apiClient;
+
     private List<Cuisine> cuisines;
     private List<Dish> dishes;
     private Map<Integer, List<Dish>> dishesByCuisine;
+    private List<Dish> topDishes;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private static final int PAGE_SIZE = 10;
 
-    public DataManager() {
-        cuisines = new ArrayList<>();
-        dishes = new ArrayList<>();
-        dishesByCuisine = new HashMap<>();
+    private DataFetchListener dataFetchListener;
+
+    public interface DataFetchListener {
+        void onDataFetched();
+        void onError(String errorMessage);
+    }
+
+    public DataManager(Context context) {
+        this.context = context;
+        this.apiClient = new ApiClient();
+        this.cuisines = new ArrayList<>();
+        this.dishes = new ArrayList<>();
+        this.dishesByCuisine = new HashMap<>();
+        this.topDishes = new ArrayList<>();
+    }
+
+    public void setDataFetchListener(DataFetchListener listener) {
+        this.dataFetchListener = listener;
     }
 
     /**
-     * Initialize sample data for the application
-     * In a real app, this would fetch data from an API
+     * Fetch data from API
      */
-    public void initializeData() {
-        // Create cuisines
-        cuisines.add(new Cuisine(1, "North Indian", "https://example.com/north_indian.jpg"));
-        cuisines.add(new Cuisine(2, "Chinese", "https://example.com/chinese.jpg"));
-        cuisines.add(new Cuisine(3, "Mexican", "https://example.com/mexican.jpg"));
-        cuisines.add(new Cuisine(4, "South Indian", "https://example.com/south_indian.jpg"));
-        cuisines.add(new Cuisine(5, "Italian", "https://example.com/italian.jpg"));
+    public void fetchData() {
+        // Reset to first page when fetching all data
+        currentPage = 1;
+        fetchNextPage();
+    }
 
-        // Create dishes
-        // North Indian dishes
-        dishes.add(new Dish(101, "Butter Chicken", "Tender chicken in creamy tomato sauce",
-                299.0, "https://example.com/butter_chicken.jpg", 4.7f, 1, true));
-        dishes.add(new Dish(102, "Paneer Tikka", "Marinated cottage cheese pieces grilled to perfection",
-                249.0, "https://example.com/paneer_tikka.jpg", 4.5f, 1, false));
-        dishes.add(new Dish(103, "Dal Makhani", "Black lentils cooked with butter and cream",
-                199.0, "https://example.com/dal_makhani.jpg", 4.3f, 1, false));
-        dishes.add(new Dish(104, "Naan", "Tandoor-baked flatbread",
-                59.0, "https://example.com/naan.jpg", 4.6f, 1, false));
-
-        // Chinese dishes
-        dishes.add(new Dish(201, "Schezwan Noodles", "Stir-fried noodles with vegetables in spicy sauce",
-                189.0, "https://example.com/schezwan_noodles.jpg", 4.2f, 2, false));
-        dishes.add(new Dish(202, "Manchurian", "Fried vegetable dumplings in tangy sauce",
-                199.0, "https://example.com/manchurian.jpg", 4.4f, 2, true));
-        dishes.add(new Dish(203, "Spring Rolls", "Crispy rolls filled with vegetables",
-                129.0, "https://example.com/spring_rolls.jpg", 4.1f, 2, false));
-
-        // Mexican dishes
-        dishes.add(new Dish(301, "Tacos", "Corn tortillas with various fillings",
-                219.0, "https://example.com/tacos.jpg", 4.5f, 3, false));
-        dishes.add(new Dish(302, "Nachos", "Tortilla chips with cheese and toppings",
-                249.0, "https://example.com/nachos.jpg", 4.6f, 3, false));
-        dishes.add(new Dish(303, "Quesadilla", "Grilled tortilla filled with cheese and vegetables",
-                229.0, "https://example.com/quesadilla.jpg", 4.3f, 3, true));
-
-        // South Indian dishes
-        dishes.add(new Dish(401, "Masala Dosa", "Crispy rice crepe with potato filling",
-                179.0, "https://example.com/masala_dosa.jpg", 4.7f, 4, false));
-        dishes.add(new Dish(402, "Idli Sambar", "Steamed rice cakes with lentil soup",
-                159.0, "https://example.com/idli_sambar.jpg", 4.4f, 4, false));
-        dishes.add(new Dish(403, "Vada", "Savory fried snack",
-                129.0, "https://example.com/vada.jpg", 4.3f, 4, false));
-
-        // Italian dishes
-        dishes.add(new Dish(501, "Margherita Pizza", "Classic pizza with tomato and cheese",
-                279.0, "https://example.com/margherita.jpg", 4.8f, 5, false));
-        dishes.add(new Dish(502, "Pasta Alfredo", "Pasta in creamy white sauce",
-                249.0, "https://example.com/pasta_alfredo.jpg", 4.6f, 5, false));
-        dishes.add(new Dish(503, "Lasagna", "Layered pasta with sauce and cheese",
-                299.0, "https://example.com/lasagna.jpg", 4.7f, 5, false));
-
-        // Organize dishes by cuisine for faster access
-        for (Dish dish : dishes) {
-            if (!dishesByCuisine.containsKey(dish.getCuisineId())) {
-                dishesByCuisine.put(dish.getCuisineId(), new ArrayList<>());
-            }
-            dishesByCuisine.get(dish.getCuisineId()).add(dish);
+    /**
+     * Fetch next page of data
+     */
+    public void fetchNextPage() {
+        if (currentPage > totalPages && totalPages > 0) {
+            // No more pages to fetch
+            return;
         }
+
+        apiClient.getItemList(currentPage, PAGE_SIZE, new ApiClient.ApiCallback<Map<String, Object>>() {
+            @Override
+            public void onSuccess(Map<String, Object> result) {
+                // If it's the first page, clear existing data
+                if (currentPage == 1) {
+                    cuisines.clear();
+                    dishesByCuisine.clear();
+                    dishes.clear();
+                }
+
+                // Update data
+                List<Cuisine> fetchedCuisines = (List<Cuisine>) result.get("cuisines");
+                Map<Integer, List<Dish>> fetchedDishesByCuisine = (Map<Integer, List<Dish>>) result.get("dishesByCuisine");
+
+                cuisines.addAll(fetchedCuisines);
+
+                // Add dishes to the dishes list and update the dishesByCuisine map
+                for (Map.Entry<Integer, List<Dish>> entry : fetchedDishesByCuisine.entrySet()) {
+                    if (!dishesByCuisine.containsKey(entry.getKey())) {
+                        dishesByCuisine.put(entry.getKey(), new ArrayList<>());
+                    }
+                    dishesByCuisine.get(entry.getKey()).addAll(entry.getValue());
+                    dishes.addAll(entry.getValue());
+                }
+
+                // Update pagination information
+                currentPage = (int) result.get("page") + 1; // Next page
+                totalPages = (int) result.get("totalPages");
+
+                // After fetching the data, identify top dishes
+                // For simplicity, we'll consider the first 3 dishes with rating above 4.5 as "top"
+                identifyTopDishes();
+
+                if (dataFetchListener != null) {
+                    dataFetchListener.onDataFetched();
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Error fetching data: " + errorMessage);
+                if (dataFetchListener != null) {
+                    dataFetchListener.onError(errorMessage);
+                }
+            }
+        });
+    }
+
+    /**
+     * For our simple implementation, we'll consider dishes with high ratings as "top dishes"
+     */
+    private void identifyTopDishes() {
+        topDishes.clear();
+
+        List<Dish> allDishes = new ArrayList<>();
+        for (List<Dish> cuisineDishes : dishesByCuisine.values()) {
+            allDishes.addAll(cuisineDishes);
+        }
+
+        // Sort by rating in descending order
+        allDishes.sort((dish1, dish2) -> Float.compare(dish2.getRating(), dish1.getRating()));
+
+        // Take top 3 or less if there are fewer dishes
+        int topDishCount = Math.min(3, allDishes.size());
+        for (int i = 0; i < topDishCount; i++) {
+            Dish dish = allDishes.get(i);
+            // Mark as top dish
+            dish.setTopDish(true);
+            topDishes.add(dish);
+        }
+    }
+
+    /**
+     * Get dish details by ID
+     */
+    public void getDishById(int dishId, ApiClient.ApiCallback<Dish> callback) {
+        // First check if dish is already loaded
+        for (Dish dish : dishes) {
+            if (dish.getId() == dishId) {
+                callback.onSuccess(dish);
+                return;
+            }
+        }
+
+        // If not loaded, fetch from API
+        apiClient.getItemById(dishId, callback);
+    }
+
+    /**
+     * Filter dishes by cuisine, price range, and/or rating
+     */
+    public void filterDishes(List<String> cuisineTypes, Double minPrice, Double maxPrice,
+                             Float minRating, ApiClient.ApiCallback<Map<String, Object>> callback) {
+        apiClient.getItemsByFilter(cuisineTypes, minPrice, maxPrice, minRating, callback);
     }
 
     /**
@@ -118,19 +194,9 @@ public class DataManager {
     }
 
     /**
-     * Get top dishes marked as featured
+     * Get top dishes
      */
     public List<Dish> getTopDishes() {
-        List<Dish> topDishes = new ArrayList<>();
-        for (Dish dish : dishes) {
-            if (dish.isTopDish()) {
-                topDishes.add(dish);
-            }
-            // Return max 3 top dishes
-            if (topDishes.size() >= 3) {
-                break;
-            }
-        }
         return topDishes;
     }
 
@@ -144,5 +210,12 @@ public class DataManager {
             }
         }
         return null;
+    }
+
+    /**
+     * Check if we have more pages to fetch
+     */
+    public boolean hasMorePages() {
+        return currentPage <= totalPages;
     }
 }
