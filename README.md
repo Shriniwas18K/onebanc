@@ -1,4 +1,4 @@
-# OneBanc Restaurant App
+# Restaurant Android App
 
 A feature-rich restaurant application developed for the OneBanc technical assignment that allows users to explore cuisines, view dishes, add items to cart, and place orders.
 
@@ -23,15 +23,8 @@ A feature-rich restaurant application developed for the OneBanc technical assign
 - Responsive design that works across different device sizes
 
 ## Screenshots
-
-<table>
-  <tr>
-    <td>![image](https://github.com/user-attachments/assets/3784ef93-0d69-4c22-a1a5-7b695d90596d)
-</td>
-    <td>![image](https://github.com/user-attachments/assets/5bfaadd0-3267-491a-86be-895d42d0d451)
-</td>
-  </tr>
-</table>
+![image](https://github.com/user-attachments/assets/3784ef93-0d69-4c22-a1a5-7b695d90596d)
+![image](https://github.com/user-attachments/assets/5bfaadd0-3267-491a-86be-895d42d0d451)
 
 ## App Architecture
 
